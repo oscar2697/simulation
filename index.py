@@ -5,7 +5,7 @@ pygame.init()
 
 WIDTH, HEIGHT = 800, 900
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Planet SImulation")
+pygame.display.set_caption("Planet Simulation")
 
 WHITE = (255, 255, 255)
 YELLOW = (255, 255, 0)
@@ -16,7 +16,7 @@ DARK_GREY =  (80, 78, 81)
 class Planet:
     AU = 149.6e6 * 1000
     G =  6.67428e-11
-    SCALE = 200 / AU
+    SCALE = 250 / AU
     TIMESTEP = 3600 * 24
 
     def __init__(self, x, y, radius, color, mass):
@@ -53,7 +53,7 @@ class Planet:
         other_x, other_y = other.x, other.y
         distance_x = other_x - self.x
         distance_y = other_y - self.y
-        distance = math.sqrt(distance_x**2 + distance_y**2)
+        distance = math.sqrt(distance_x ** 2 + distance_y ** 2)
 
         if other.sun:
             self.distance_to_sun = distance
@@ -75,8 +75,8 @@ class Planet:
             total_fx += fx
             total_fy += fy
 
-        self.x_vel = total_fx / self.mass * self.TIMESTEP
-        self.y_vel = total_fy / self.mass * self.TIMESTEP
+        self.x_vel += total_fx / self.mass * self.TIMESTEP
+        self.y_vel += total_fy / self.mass * self.TIMESTEP
 
         self.x += self.x_vel * self.TIMESTEP
         self.y += self.y_vel * self.TIMESTEP
@@ -106,7 +106,7 @@ def main():
 
         for event in pygame.event.get():
             if event.type  == pygame.QUIT:
-                run  = False
+                run = False
 
         for planet in planets:
             planet.update_position(planets)
