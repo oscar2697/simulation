@@ -3,24 +3,21 @@ import math
 import random
 from pygame.locals import *
 
-# Inicialización de Pygame
 pygame.init()
 WIDTH, HEIGHT = 1200, 800
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Agujero Negro con Órbitas Realistas - CORREGIDO")
 clock = pygame.time.Clock()
 
-# Configuración de colores
 BACKGROUND_COLOR = (10, 5, 25)
 BLACK_HOLE_COLOR = (0, 0, 0)
 EVENT_HORIZON_COLOR = (30, 20, 40)
 STAR_COLOR = (220, 220, 255)
 
-# Constantes físicas (simuladas)
-G = 800   # Constante gravitacional aumentada
-M = 1000  # Masa del agujero negro
-SCHWARZSCHILD_RADIUS = 25   # Radio del agujero negro
-EVENT_HORIZON_RADIUS = 50   # Radio del horizonte de eventos
+G = 800   
+M = 1000  
+SCHWARZSCHILD_RADIUS = 25   
+EVENT_HORIZON_RADIUS = 50   
 
 class Star:
     def __init__(self):
@@ -39,7 +36,6 @@ class Star:
         pass
     
     def project(self, camera_pos):
-        # Proyección en perspectiva correcta  # <<<
         dx = self.x - camera_pos[0]
         dy = self.y - camera_pos[1]
         dz = self.z - camera_pos[2]
@@ -47,11 +43,10 @@ class Star:
             return None, None, 0
         
         factor = 800 / dz
-        screen_x = dx * factor + WIDTH // 2   # <<<
-        screen_y = dy * factor + HEIGHT // 2  # <<<
+        screen_x = dx * factor + WIDTH // 2   
+        screen_y = dy * factor + HEIGHT // 2  
         size = self.size * factor
-        
-        # No hagas culling fuerte aquí porque luego desplazamos toda la escena
+
         if size < 0.2:
             return None, None, 0
             
@@ -63,7 +58,7 @@ class AccretionParticle:
         self.reset()
 
     def reset(self):
-        self.distance = random.uniform(500, 1500)   # Aparecen más lejos
+        self.distance = random.uniform(500, 1500)   
         self.angle = random.uniform(0, 2 * math.pi)
         self.inclination = random.uniform(-0.3, 0.3)
 
@@ -79,7 +74,7 @@ class AccretionParticle:
         self.size = random.uniform(1.5, 3.5)
         self.spiral_factor = random.uniform(0.9993, 0.9997)
 
-        self.life = 1.0   # 1 = visible, 0 = desaparecida
+        self.life = 1.0  
         self.fade_out = False
         self.update_color()
 
@@ -89,7 +84,6 @@ class AccretionParticle:
         dz = self.center_z - self.z
         distance_3d = max(1.0, math.sqrt(dx*dx + dy*dy + dz*dz))
 
-        # Física gravitacional
         force_magnitude = G * M / (distance_3d**2)
         ax = force_magnitude * dx / distance_3d
         ay = force_magnitude * dy / distance_3d
@@ -108,25 +102,22 @@ class AccretionParticle:
         self.y += self.velocity_y * dt
         self.z += self.velocity_z * dt
 
-        # Si entra en el horizonte, empieza a desvanecerse
         if distance_3d < EVENT_HORIZON_RADIUS and not self.fade_out:
             self.fade_out = True
 
         if self.fade_out:
-            self.life -= 0.05  # se desvanece gradualmente
-            self.size *= 1.05  # se hincha un poco antes de morir
+            self.life -= 0.05  
+            self.size *= 1.05  
             if self.life <= 0:
                 self.reset()
 
         self.update_color()
 
     def update_color(self):
-        # Igual que ahora pero multiplicamos por self.life para el fade
         base_color = (255, 200, 100)
         self.color = tuple(int(c * self.life) for c in base_color)
 
     def project(self, camera_pos):
-        # Proyección en perspectiva (igual que estrellas)  # <<<
         dx = self.x - camera_pos[0]
         dy = self.y - camera_pos[1]
         dz = self.z - camera_pos[2]
@@ -169,30 +160,26 @@ class BlackHole:
         return int(screen_x), int(screen_y)
     
     def draw(self, surface, camera_pos):
-        # 1) ¿Dónde cae el origen con esta cámara?
         proj_cx, proj_cy = self.project_center(camera_pos)
-        # 2) Desplazamiento para fijar el origen en el centro real
-        offset_x = WIDTH // 2 - proj_cx   # <<<
-        offset_y = HEIGHT // 2 - proj_cy  # <<<
-        
-        # --- Estrellas ---
+        offset_x = WIDTH // 2 - proj_cx   
+        offset_y = HEIGHT // 2 - proj_cy  
+
         for star in self.stars:
             sx, sy, size = star.project(camera_pos)
             if sx is None:
                 continue
-            sx += offset_x  # <<<
-            sy += offset_y  # <<<
+            sx += offset_x  
+            sy += offset_y  
             if -50 <= sx <= WIDTH + 50 and -50 <= sy <= HEIGHT + 50 and size > 0.2:
                 pygame.draw.circle(surface, star.color, (int(sx), int(sy)), max(1, int(size)))
-        
-        # --- Partículas del disco ---
+
         particles_to_draw = []
         for p in self.accretion_particles:
             sx, sy, size = p.project(camera_pos)
             if sx is None:
                 continue
-            sx += offset_x  # <<<
-            sy += offset_y  # <<<
+            sx += offset_x  
+            sy += offset_y  
             if -50 <= sx <= WIDTH + 50 and -50 <= sy <= HEIGHT + 50 and size > 0.5:
                 dist_to_camera = math.sqrt(
                     (p.x - camera_pos[0])**2 +
@@ -207,11 +194,8 @@ class BlackHole:
             glow_size = max(2, int(size * 1.5))
             glow_color = tuple(min(255, int(c * 0.3)) for c in color)
             pygame.draw.circle(surface, glow_color, (int(sx), int(sy)), glow_size, 1)
-        
-        # --- Agujero negro centrado geométricamente ---
-        bh_screen_x, bh_screen_y = WIDTH // 2, HEIGHT // 2  # <<<
-        
-        # Tamaño en función de la distancia (puede quedar estático si lo prefieres)
+
+        bh_screen_x, bh_screen_y = WIDTH // 2, HEIGHT // 2  
         bh_distance = math.sqrt(sum((camera_pos[i] - self.center[i])**2 for i in range(3)))
         size_factor = 800 / max(100, bh_distance)
         event_horizon_size = max(10, int(self.event_horizon_radius * size_factor))
@@ -231,27 +215,22 @@ class BlackHole:
         corona_color = (min(255, corona_alpha), min(255, corona_alpha//2), min(255, int(corona_alpha * 1.5)))
         pygame.draw.circle(surface, corona_color, (bh_screen_x, bh_screen_y), corona_radius, 2)
 
-# Crear agujero negro
 black_hole = BlackHole()
 
-# Configuración de cámara
 camera_angle = 0
 camera_elevation = 0.3
 camera_distance = 600
 rotation_speed = 0.003
 
-# Controles
 running = True
 dragging = False
 last_mouse_pos = (0, 0)
 auto_rotate = True
 show_info = True
 
-# Fuentes
 font = pygame.font.SysFont(None, 24)
 font_large = pygame.font.SysFont(None, 28, bold=True)
 
-# Bucle principal
 while running:
     if auto_rotate:
         camera_angle += rotation_speed
@@ -303,12 +282,10 @@ while running:
     black_hole.draw(screen, camera_pos)
     
     if show_info:
-        # Hacer el cuadro más grande
         info_surface = pygame.Surface((480, 260), pygame.SRCALPHA)
         pygame.draw.rect(info_surface, (20, 15, 35, 250), (0, 0, 490, 280), border_radius=20)
         pygame.draw.rect(info_surface, (100, 150, 230, 190), (0, 0, 480, 260), 2, border_radius=15)
-        
-        # Título más grande en inglés
+
         title = font_large.render("BLACK HOLE - CORRECTED PHYSICS", True, (50, 100, 200))
         info_surface.blit(title, (10, 10))
         
@@ -328,7 +305,7 @@ while running:
         for i, text in enumerate(texts):
             if text == "":
                 continue
-            y_pos = 70 + i * 18   # Más espacio entre líneas
+            y_pos = 70 + i * 18 
             if i < 4:
                 color = (200, 230, 255)
             elif "Implemented" in text:
@@ -339,12 +316,10 @@ while running:
         
         screen.blit(info_surface, (20, 20))
 
-    # Estado de auto-rotación
     status = "ON" if auto_rotate else "OFF"
     status_color = (100, 255, 150) if auto_rotate else (255, 100, 100)
     screen.blit(font.render(f"Auto-rotation: {status}", True, status_color), (WIDTH - 250, 20))
 
-    # Controles (en inglés también)
     controls = [
         "SPACE: Auto-rotation | R: Reset | F: Front view",
         "Mouse: Rotate camera | Wheel: Zoom | I: Info | ESC: Quit"
